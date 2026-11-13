@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Registration Desk</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 40px 20px; }
+        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 450px; width: 100%; text-align: center; }
+        h1 { color: #1a73e8; margin-top: 0; }
+        input { font-size: 32px; padding: 15px; width: 200px; text-align: center; letter-spacing: 10px; border: 2px solid #dadce0; border-radius: 8px; margin: 20px 0; outline: none; }
+        input:focus { border-color: #1a73e8; }
+        button { font-size: 18px; padding: 15px 30px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 10px; transition: 0.2s; }
+        .btn-primary { background: #1a73e8; color: white; }
+        .btn-primary:hover { background: #1557b0; }
+        .btn-success { background: #1e8e3e; color: white; display: none; }
+        .btn-success:hover { background: #145c27; }
+        .btn-cancel { background: #f1f3f4; color: #3c4043; display: none; margin-top: 10px; }
+        .btn-cancel:hover { background: #e8eaed; }
+        #status { margin-top: 20px; font-size: 18px; font-weight: bold; min-height: 25px; }
+        .error { color: #d93025; }
+        .success { color: #1e8e3e; }
+        #nameDisplay { font-size: 24px; color: #202124; margin: 20px 0; display: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>Event Check-In</h1>
+    <p id="instruction">Scan QR or type 4-digit code</p>
+    
+    <input type="text" id="codeInput" maxlength="4" autofocus onkeypress="handleEnter(event)">
+    <div id="nameDisplay"></div>
+    
+    <button id="lookupBtn" class="btn-primary" onclick="lookupCode()">Find Attendee</button>
+    <button id="confirmBtn" class="btn-success" onclick="confirmCheckIn()">Confirm & Check In</button>
+    <button id="cancelBtn" class="btn-cancel" onclick="resetForm()">Cancel</button>
+    
+    <div id="status">Ready to scan...</div>
+</div>
+
+<script>
+    // --- REPLACE THIS WITH YOUR GOOGLE APPS SCRIPT WEB APP URL ---
+    const API_URL = "YOUR_WEB_APP_URL_HERE";
+
+    let currentCode = "";
+
+    function handleEnter(e) {
+        if (e.key === 'Enter') {
+            if (document.getElementById('confirmBtn').style.display === 'block') {
+                confirmCheckIn();
+            } else {
+                lookupCode();
+            }
+        }
+    }
+
+    async function lookupCode() {
+        const code = document.getElementById('codeInput').value.trim();
+        if(code.length !== 4) {
+            showStatus("Please enter a 4-digit code.", "error");
+            return;
+        }
+
+        showStatus("Looking up attendee...", "");
+        disableInputs(true);
+
+        try {
+            const response = await fetch(`${API_URL}?action=lookup&code=${code}`);
+            const data = await response.json();
+
+            if (data.success) {
+                currentCode = code;
+                document.getElementById('instruction').style.display = 'none';
+                document.getElementById('codeInput').style.display = 'none';
+                document.getElementById('lookupBtn').style.display = 'none';
+                
+                document.getElementById('nameDisplay').innerText = data.name;
+                document.getElementById('nameDisplay').style.display = 'block';
+                document.getElementById('confirmBtn').style.display = 'block';
+                document.getElementById('cancelBtn').style.display = 'block';
+                
+                showStatus("Verify name and confirm.", "success");
+                document.getElementById('confirmBtn').focus();
+            } else {
+                showStatus(data.message + (data.name ? ` (${data.name})` : ""), "error");
+                resetFormInputs();
+            }
+        } catch (err) {
+            showStatus("Network error. Try again.", "error");
+            resetFormInputs();
+        }
+    }
+
+    async function confirmCheckIn() {
+        showStatus("Checking in...", "");
+        disableInputs(true);
+
+        try {
+            const response = await fetch(`${API_URL}?action=checkin&code=${currentCode}`);
+            const data = await response.json();
+
+            if (data.success) {
+                showStatus(`✅ ${data.name} Checked In!`, "success");
+                setTimeout(resetForm, 2500); // Auto-reset for the next person after 2.5 seconds
+            } else {
+                showStatus(data.message, "error");
+                setTimeout(resetForm, 2500);
+            }
+        } catch (err) {
+            showStatus("Network error. Try again.", "error");
+            disableInputs(false);
+        }
+    }
+
+    function showStatus(msg, className) {
+        const statusEl = document.getElementById('status');
+        statusEl.innerText = msg;
+        statusEl.className = className;
+    }
+
+    function disableInputs(disabled) {
+        document.getElementById('codeInput').disabled = disabled;
+        document.getElementById('lookupBtn').disabled = disabled;
+        document.getElementById('confirmBtn').disabled = disabled;
+    }
+
+    function resetFormInputs() {
+        disableInputs(false);
+        document.getElementById('codeInput').value = '';
+        document.getElementById('codeInput').focus();
+    }
+
+    function resetForm() {
+        currentCode = "";
+        document.getElementById('instruction').style.display = 'block';
+        document.getElementById('codeInput').style.display = 'inline-block';
+        document.getElementById('lookupBtn').style.display = 'block';
+        
+        document.getElementById('nameDisplay').style.display = 'none';
+        document.getElementById('confirmBtn').style.display = 'none';
+        document.getElementById('cancelBtn').style.display = 'none';
+        
+        showStatus("Ready to scan...", "");
+        resetFormInputs();
+    }
+</script>
+</body>
+</html>
