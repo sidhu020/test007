@@ -2,54 +2,47 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Prevents pinch-zoom and makes it feel like a native app on mobile -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Event Desk</title>
+    <title>Event Check-In Desk</title>
+    <!-- Lightweight, high-speed QR code scanner library -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        body { margin: 0; padding: 0; background-color: #f0f2f5; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { margin: 0; padding: 0; background-color: #f8f9fa; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        .header { background: #1a73e8; color: white; text-align: center; padding: 20px 10px; font-size: 22px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header { background: #1a73e8; color: white; text-align: center; padding: 18px; font-size: 20px; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
         
-        .container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; w1dth: 100%; max-width: 500px; margin: 0 auto; }
+        .container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; width: 100%; max-width: 480px; margin: 0 auto; }
         
-        .card { background: white; width: 100%; border-radius: 16px; padding: 25px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; display: flex; flex-direction: column; gap: 15px; }
+        .card { background: white; width: 100%; border-radius: 16px; padding: 24px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; display: flex; flex-direction: column; gap: 16px; }
         
-        /* State Sections */
-        #view-home, #view-camera, #view-confirm { display: none; width: 100%; }
-        #view-home.active, #view-camera.active, #view-confirm.active { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        /* Views */
+        #view-home, #view-camera, #view-confirm { display: none; width: 100%; flex-direction: column; align-items: center; gap: 16px; }
+        #view-home.active, #view-camera.active, #view-confirm.active { display: flex; }
 
-        /* Typography & Elements */
-        h2 { margin: 0; color: #202124; font-size: 20px; }
-        p.subtitle { margin: 0; color: #5f6368; font-size: 15px; }
-        .name-highlight { font-size: 28px; font-weight: 800; color: #1a73e8; margin: 10px 0; word-break: break-word; }
+        h2 { margin: 0; color: #202124; font-size: 18px; }
+        p.subtitle { margin: 0; color: #5f6368; font-size: 14px; }
+        .name-highlight { font-size: 26px; font-weight: 800; color: #1a73e8; margin: 8px 0; word-break: break-word; }
         
-        input { font-size: 32px; padding: 15px; width: 100%; max-width: 250px; text-align: center; letter-spacing: 12px; border: 2px solid #dadce0; border-radius: 12px; outline: none; transition: 0.2s; }
+        input { font-size: 32px; padding: 12px; width: 100%; max-width: 220px; text-align: center; letter-spacing: 10px; border: 2px solid #dadce0; border-radius: 12px; outline: none; transition: 0.2s; }
         input:focus { border-color: #1a73e8; }
         
-        .divider { display: flex; align-items: center; text-align: center; color: #9aa0a6; font-size: 13px; font-weight: bold; width: 100%; margin: 5px 0; }
+        .divider { display: flex; align-items: center; text-align: center; color: #9aa0a6; font-size: 12px; font-weight: bold; width: 100%; margin: 4px 0; }
         .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #dadce0; }
         .divider:not(:empty)::before { margin-right: .5em; }
         .divider:not(:empty)::after { margin-left: .5em; }
 
-        /* Camera Box */
-        #reader { width: 100%; border-radius: 12px; overflow: hidden; background: black; min-height: 250px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        #reader { width: 100%; border-radius: 12px; overflow: hidden; background: #000; min-height: 240px; }
         
-        /* Buttons */
-        button { font-size: 18px; padding: 16px; border: none; border-radius: 12px; font-weight: 600; width: 100%; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        button { font-size: 17px; padding: 16px; border: none; border-radius: 12px; font-weight: 600; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: opacity 0.2s; }
+        button:active { opacity: 0.8; }
         .btn-primary { background: #1a73e8; color: white; }
-        .btn-primary:active { background: #1557b0; }
         .btn-camera { background: #202124; color: white; }
-        .btn-camera:active { background: #000; }
-        .btn-success { background: #1e8e3e; color: white; font-size: 20px; padding: 20px; }
-        .btn-success:active { background: #145c27; }
+        .btn-success { background: #1e8e3e; color: white; font-size: 19px; padding: 18px; }
         .btn-secondary { background: #f1f3f4; color: #3c4043; }
-        .btn-secondary:active { background: #e8eaed; }
         
-        /* Notifications */
-        #status-bar { margin-top: auto; width: 100%; text-align: center; padding: 15px; font-weight: bold; font-size: 16px; min-height: 50px; border-radius: 8px 8px 0 0; transition: 0.3s; }
-        .status-idle { color: #5f6368; background: transparent; }
+        #status-bar { width: 100%; text-align: center; padding: 14px; font-weight: 600; font-size: 15px; min-height: 48px; border-radius: 8px; margin-top: auto; }
+        .status-idle { color: #5f6368; background: #f1f3f4; }
         .status-loading { color: #b06000; background: #fef7e0; }
         .status-error { color: #d93025; background: #fce8e6; }
         .status-success { color: #1e8e3e; background: #e6f4ea; }
@@ -62,169 +55,148 @@
     <div class="container">
         <div class="card">
             
-            <!-- VIEW 1: HOME (Manual or Start Camera) -->
+            <!-- VIEW 1: HOME (Camera or Manual Code) -->
             <div id="view-home" class="active">
                 <button class="btn-camera" onclick="startCamera()">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                    Scan QR Ticket
+                    📷 Scan Ticket QR Code
                 </button>
                 
-                <div class="divider">OR ENTER CODE</div>
+                <div class="divider">OR TYPE 4-DIGIT CODE</div>
                 
-                <p class="subtitle">Type the 4-digit entry code</p>
-                <input type="text" id="codeInput" maxlength="4" placeholder="0000" inputmode="numeric" onkeypress="if(event.key === 'Enter') processCode()">
-                <button class="btn-primary" onclick="processCode()">Find Attendee</button>
+                <input type="text" id="codeInput" maxlength="4" placeholder="----" inputmode="numeric" onkeypress="if(event.key === 'Enter') lookupCode()">
+                <button class="btn-primary" onclick="lookupCode()">Find Attendee</button>
             </div>
 
-            <!-- VIEW 2: CAMERA SCANNER -->
+            <!-- VIEW 2: CAMERA STREAM -->
             <div id="view-camera">
-                <h2>Scan Ticket</h2>
+                <h2>Align QR Code in Frame</h2>
                 <div id="reader"></div>
-                <button class="btn-secondary" onclick="stopCamera()">Cancel Scan</button>
+                <button class="btn-secondary" onclick="stopCamera()">Cancel Camera</button>
             </div>
 
-            <!-- VIEW 3: CONFIRMATION -->
+            <!-- VIEW 3: VERBAL CONFIRMATION -->
             <div id="view-confirm">
-                <p class="subtitle">Confirm Verbally</p>
-                <div class="name-highlight" id="displayName">Attendee Name</div>
-                <div style="color:#5f6368; font-size:18px; margin-bottom: 10px;">ID: <span id="displayCode" style="font-weight:bold;"></span></div>
+                <p class="subtitle">Confirm Name Verbally at Desk</p>
+                <div class="name-highlight" id="displayName">--</div>
+                <div style="color:#5f6368; font-size:16px;">Pass ID: <span id="displayCode" style="font-weight:bold;">--</span></div>
                 
                 <button class="btn-success" onclick="markCheckedIn()">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    Mark Checked In
+                    ✅ Confirm & Mark Present
                 </button>
-                <button class="btn-secondary" onclick="resetApp()">Cancel / Wrong Person</button>
+                <button class="btn-secondary" onclick="resetApp()">Cancel / Wrong Guest</button>
             </div>
 
         </div>
+
+        <div id="status-bar" class="status-idle">Ready to scan next guest.</div>
     </div>
 
-    <!-- Status Banner at bottom -->
-    <div id="status-bar" class="status-idle">Ready for next guest.</div>
-
 <script>
-    // ==========================================
-    // CONFIGURATION
-    // ==========================================
-    const API_URL = "https://script.google.com/macros/s/AKfycbyA8YPNRkU4qfW1EZFg1sNm8pRI4-vFg5KDLFM-8S3GGlDkAAHGXSmTtTpffhpspxO7/exec"; // <-- PASTE YOUR URL HERE
+    // --- CONFIGURE YOUR APPS SCRIPT WEB APP URL HERE ---
+    const API_URL = "https://script.google.com/macros/s/AKfycbwEnl0wfy_fxgPkw3UCePpOxEFZPDMl7e7qXrycOyKWOFr_ealoiULiMbX-2q9vH8o9/exec";
 
-    // ==========================================
-    // APP STATE & ROUTING
-    // ==========================================
     let currentCode = "";
     let html5QrCode = null;
 
     function switchView(viewId) {
-        document.getElementById('view-home').classList.remove('active');
-        document.getElementById('view-camera').classList.remove('active');
-        document.getElementById('view-confirm').classList.remove('active');
+        ['view-home', 'view-camera', 'view-confirm'].forEach(id => {
+            document.getElementById(id).classList.remove('active');
+        });
         document.getElementById(viewId).classList.add('active');
     }
 
     function setStatus(msg, type = 'idle') {
-        const statusBar = document.getElementById('status-bar');
-        statusBar.textContent = msg;
-        statusBar.className = `status-${type}`;
+        const bar = document.getElementById('status-bar');
+        bar.textContent = msg;
+        bar.className = `status-${type}`;
     }
 
     function resetApp() {
         currentCode = "";
         document.getElementById('codeInput').value = "";
         switchView('view-home');
-        setStatus("Ready for next guest.", "idle");
+        setStatus("Ready to scan next guest.", "idle");
     }
 
-    // ==========================================
-    // CAMERA SCANNER LOGIC
-    // ==========================================
+    // --- CAMERA SCANNER FUNCTIONS ---
     function startCamera() {
         switchView('view-camera');
-        setStatus("Starting camera...", "loading");
+        setStatus("Initializing camera...", "loading");
         
         html5QrCode = new Html5Qrcode("reader");
-        const config = { fps: 10, qrbox: { width: 200, height: 200 } };
-        
-        // Use rear camera if available
-        html5QrCode.start({ facingMode: "environment" }, config, 
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            { fps: 10, qrbox: { width: 220, height: 220 } },
             (decodedText) => {
-                // On Success
-                stopCameraLogic();
-                document.getElementById('codeInput').value = decodedText;
-                processCode(decodedText);
+                stopCamera();
+                document.getElementById('codeInput').value = decodedText.trim();
+                lookupCode(decodedText.trim());
             },
-            (errorMessage) => {
-                // Ignore background errors while scanning
-            }
+            (error) => {} // Suppress continuous scan frame errors
         ).then(() => {
-            setStatus("Point camera at QR code.", "idle");
+            setStatus("Point camera at attendee QR code.", "idle");
         }).catch(err => {
-            setStatus("Camera permission denied or unavailable.", "error");
-            stopCameraLogic();
+            setStatus("Camera access denied or unavailable.", "error");
+            switchView('view-home');
         });
     }
 
-    function stopCameraLogic() {
+    function stopCamera() {
         if (html5QrCode && html5QrCode.isScanning) {
-            html5QrCode.stop().catch(err => console.error("Failed to stop scanner", err));
+            html5QrCode.stop().catch(err => console.log(err));
+        }
+        if(document.getElementById('view-camera').classList.contains('active')) {
+            switchView('view-home');
+            setStatus("Ready to scan next guest.", "idle");
         }
     }
 
-    function stopCamera() {
-        stopCameraLogic();
-        resetApp();
-    }
-
-    // ==========================================
-    // API COMMUNICATION LOGIC
-    // ==========================================
-    async function processCode(scannedCode = null) {
-        const code = scannedCode || document.getElementById('codeInput').value.trim();
+    // --- API WORKFLOW ---
+    async function lookupCode(overrideCode = null) {
+        const code = overrideCode || document.getElementById('codeInput').value.trim();
         
         if (code.length !== 4) {
-            setStatus("Please enter a 4-digit code.", "error");
+            setStatus("Please enter a valid 4-digit code.", "error");
             return;
         }
 
         currentCode = code;
-        setStatus("Looking up...", "loading");
+        setStatus("Looking up attendee...", "loading");
 
         try {
-            const response = await fetch(`${API_URL}?action=lookup&code=${code}`);
-            const data = await response.json();
+            const res = await fetch(`${API_URL}?action=lookup&code=${code}`);
+            const data = await res.json();
 
             if (data.success) {
-                // Show Confirmation Screen
                 document.getElementById('displayName').textContent = data.name;
                 document.getElementById('displayCode').textContent = code;
                 switchView('view-confirm');
-                setStatus("Verify name and confirm.", "idle");
+                setStatus("Verify name with guest.", "idle");
             } else {
-                setStatus(data.message + (data.name ? ` (${data.name})` : ""), "error");
+                setStatus(data.message, "error");
                 document.getElementById('codeInput').value = "";
             }
         } catch (err) {
-            setStatus("Network error. Try again.", "error");
+            setStatus("Network error. Please try again.", "error");
         }
     }
 
     async function markCheckedIn() {
-        setStatus("Checking in...", "loading");
+        setStatus("Saving check-in...", "loading");
 
         try {
-            const response = await fetch(`${API_URL}?action=checkin&code=${currentCode}`);
-            const data = await response.json();
+            const res = await fetch(`${API_URL}?action=checkin&code=${currentCode}`);
+            const data = await res.json();
 
             if (data.success) {
-                setStatus(`✅ ${data.name} Checked In!`, "success");
-                
-                // Show success briefly, then auto-reset for the next person
-                document.getElementById('view-confirm').classList.remove('active');
-                setTimeout(resetApp, 2000);
+                setStatus(`✅ ${data.name} Checked In Successfully!`, "success");
+                setTimeout(resetApp, 2200); // Auto-reset desk for the next person in line
             } else {
                 setStatus(data.message, "error");
+                setTimeout(resetApp, 2500);
             }
         } catch (err) {
-            setStatus("Network error. Try again.", "error");
+            setStatus("Network error. Please try again.", "error");
         }
     }
 </script>
