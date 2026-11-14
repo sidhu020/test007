@@ -4,7 +4,7 @@
 ************************************************/
 
 const CONFIG = {
-  API_URL: "PASTE_YOUR_WEB_APP_URL_HERE",
+  API_URL: "https://script.google.com/macros/s/AKfycbzUX7gozlnpERRSOTJcWMlZZhWE4bpGQpr2Oev2WzjgbFhGIzX3Jyfm9N9zO6FRNbd_/exec",
 
   // Change for each check-in station.
   DESK_NAME: "DESK-01"
